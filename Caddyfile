@@ -1,0 +1,19 @@
+{
+	auto_https off
+}
+
+:8080 {
+	root * public
+	encode gzip
+
+	php_fastcgi unix//var/run/php/php-fpm.sock {
+		try_files {path} /index.php{query}
+	}
+
+	file_server
+
+	log {
+		output stdout
+		format console
+	}
+}
