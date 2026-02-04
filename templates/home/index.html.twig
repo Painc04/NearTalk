@@ -1,0 +1,2578 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}NearTalk API{% endblock %}
+
+{% block body %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+        min-height: 100vh;
+        padding: 0;
+        margin: 0;
+        color: #2d3748;
+    }
+    
+    .main-wrapper {
+        display: flex;
+        min-height: 100vh;
+        max-width: 1600px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 0;
+        overflow: hidden;
+        box-shadow: none;
+        animation: fadeIn 0.6s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .sidebar {
+        width: 380px;
+        background: linear-gradient(180deg, #1a202c 0%, #2d3748 100%);
+        color: white;
+        padding: 30px 20px;
+        overflow-y: auto;
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        border-right: 1px solid rgba(255,255,255,0.1);
+        z-index: 100;
+    }
+    
+    .sidebar::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .sidebar::-webkit-scrollbar-track {
+        background: rgba(255,255,255,0.05);
+    }
+    
+    .sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.2);
+        border-radius: 3px;
+    }
+    
+    .sidebar h3 {
+        color: #90cdf4;
+        margin-bottom: 25px;
+        font-size: 1.4em;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid rgba(144, 205, 244, 0.3);
+    }
+    
+    .sidebar-item {
+        padding: 12px 16px;
+        margin: 6px 0;
+        background: rgba(255,255,255,0.05);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 0.9em;
+        border: 1px solid transparent;
+        backdrop-filter: blur(10px);
+    }
+    
+    .sidebar-item:hover {
+        background: rgba(66, 153, 225, 0.2);
+        transform: translateX(8px);
+        border-color: rgba(144, 205, 244, 0.3);
+        box-shadow: 0 4px 12px rgba(66, 153, 225, 0.2);
+    }
+    
+    .sidebar-item .method-tag {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 4px;
+        font-size: 0.7em;
+        font-weight: 600;
+        margin-right: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .sidebar-item .method-tag.get { background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%); }
+    .sidebar-item .method-tag.post { background: linear-gradient(135deg, #38a169 0%, #276749 100%); }
+    .sidebar-item .method-tag.put { background: linear-gradient(135deg, #ed8936 0%, #c05621 100%); }
+    .sidebar-item .method-tag.delete { background: linear-gradient(135deg, #e53e3e 0%, #9b2c2c 100%); }
+    
+    .content {
+        flex: 1;
+        padding: 50px;
+        margin-left: 380px;
+        overflow-y: auto;
+        background: #f7fafc;
+        min-height: 100vh;
+    }
+    
+    .content::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .content::-webkit-scrollbar-track {
+        background: #edf2f7;
+    }
+    
+    .content::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 4px;
+    }
+    
+    h1 {
+        color: #1a202c;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+        font-size: 2.5em;
+        font-weight: 700;
+        letter-spacing: -1px;
+        position: relative;
+    }
+    
+    h1::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 80px;
+        height: 4px;
+        background: linear-gradient(90deg, #3182ce 0%, #63b3ed 100%);
+        border-radius: 2px;
+    }
+    
+    .section {
+        margin: 40px 0;
+        scroll-margin-top: 30px;
+        animation: slideIn 0.5s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .section h2 {
+        color: #2d3748;
+        margin-bottom: 25px;
+        font-size: 1.8em;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .section h2::before {
+        content: '';
+        width: 6px;
+        height: 32px;
+        background: linear-gradient(180deg, #3182ce 0%, #2c5282 100%);
+        border-radius: 3px;
+    }
+    
+    .endpoint {
+        background: white;
+        padding: 28px;
+        margin: 20px 0;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .endpoint::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(180deg, #3182ce 0%, #63b3ed 100%);
+    }
+    
+    .endpoint:hover {
+        box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .method {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-weight: 600;
+        color: white;
+        margin-right: 12px;
+        min-width: 70px;
+        text-align: center;
+        font-size: 0.8em;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .method.get { background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%); }
+    .method.post { background: linear-gradient(135deg, #38a169 0%, #276749 100%); }
+    .method.put { background: linear-gradient(135deg, #ed8936 0%, #c05621 100%); }
+    .method.delete { background: linear-gradient(135deg, #e53e3e 0%, #9b2c2c 100%); }
+    
+    .ruta {
+        font-family: 'Fira Code', 'Courier New', monospace;
+        background: #2d3748;
+        color: #90cdf4;
+        padding: 8px 14px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        font-weight: 500;
+        letter-spacing: 0.3px;
+    }
+    
+    .descripcion {
+        margin: 18px 0;
+        color: #4a5568;
+        font-size: 0.95em;
+        line-height: 1.6;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.75em;
+        margin-left: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge.public {
+        background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+        color: white;
+    }
+    
+    .badge.private {
+        background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+        color: white;
+    }
+    
+    .info-box {
+        background: linear-gradient(135deg, #ebf8ff 0%, #e6fffa 100%);
+        border: 1px solid #bee3f8;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .info-box strong {
+        color: #2c5282;
+        font-weight: 600;
+    }
+    
+    .test-form {
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+        animation: expandIn 0.3s ease-out;
+    }
+    
+    @keyframes expandIn {
+        from {
+            opacity: 0;
+            max-height: 0;
+        }
+        to {
+            opacity: 1;
+            max-height: 1000px;
+        }
+    }
+    
+    .test-form h4 {
+        color: #2d3748;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+    
+    .test-form textarea {
+        width: 100%;
+        min-height: 130px;
+        padding: 14px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-family: 'Fira Code', 'Courier New', monospace;
+        font-size: 0.85em;
+        margin-bottom: 12px;
+        background: white;
+        transition: all 0.3s ease;
+        resize: vertical;
+    }
+    
+    .test-form textarea:focus {
+        outline: none;
+        border-color: #3182ce;
+        box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+    }
+    
+    .test-form button {
+        background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(49, 130, 206, 0.3);
+    }
+    
+    .test-form button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(49, 130, 206, 0.4);
+    }
+    
+    .test-form button:active {
+        transform: translateY(0);
+    }
+    
+    .response-box {
+        margin-top: 20px;
+        padding: 20px;
+        background: #1a202c;
+        color: #68d391;
+        border-radius: 10px;
+        font-family: 'Fira Code', 'Courier New', monospace;
+        font-size: 0.85em;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-height: 450px;
+        overflow-y: auto;
+        display: none;
+        border: 1px solid #2d3748;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .response-box.visible {
+        display: block;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    .btn-test {
+        background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.85em;
+        font-weight: 600;
+        margin-top: 12px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(49, 130, 206, 0.3);
+    }
+    
+    .btn-test:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(49, 130, 206, 0.4);
+    }
+    
+    .btn-back {
+        background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.85em;
+        font-weight: 600;
+        margin-left: 10px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(113, 128, 150, 0.3);
+    }
+    
+    .btn-back:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(113, 128, 150, 0.4);
+    }
+    
+    .btn-index {
+        background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.8em;
+        font-weight: 600;
+        margin-left: 10px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(49, 151, 149, 0.3);
+    }
+    
+    .btn-index:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(49, 151, 149, 0.4);
+    }
+    
+    .test-form input[type="text"] {
+        border: 2px solid #e2e8f0;
+        transition: all 0.3s ease;
+    }
+    
+    .test-form input[type="text"]:focus {
+        outline: none;
+        border-color: #3182ce;
+        box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+    }
+</style>
+
+<div class="main-wrapper">
+    <aside class="sidebar">
+        <h3>Índice</h3>
+        <div class="sidebar-item" onclick="scrollToSection('conexion')">
+            <span class="method-tag post">POST</span> /api/conexion
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('registro')">
+            <span class="method-tag post">POST</span> /api/registro
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('login')">
+            <span class="method-tag post">POST</span> /api/login
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('logout')">
+            <span class="method-tag post">POST</span> /api/logout
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('perfil')">
+            <span class="method-tag post">POST</span> /api/usuarios/perfil
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('perfil-update')">
+            <span class="method-tag put">PUT</span> /api/usuarios/perfil
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('usuarios')">
+            <span class="method-tag get">GET/POST</span> /api/usuarios
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('usuario-token')">
+            <span class="method-tag post">POST</span> /api/usuarios/{token}
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('usuario-delete')">
+            <span class="method-tag delete">DELETE</span> /api/usuarios/{token}
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('bloquear-usuario')">
+            <span class="method-tag post">POST</span> /api/bloqueo/bloquear
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('desbloquear-usuario')">
+            <span class="method-tag delete">DELETE</span> /api/bloqueo/desbloquear
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('listar-bloqueados')">
+            <span class="method-tag post">POST</span> /api/bloqueados
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('actualizar')">
+            <span class="method-tag post">POST</span> /api/actualizar
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('general-mensaje')">
+            <span class="method-tag post">POST</span> /api/general/mensaje
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('general-usuarios')">
+            <span class="method-tag post">POST</span> /api/general/usuarios
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('chat-privado')">
+            <span class="method-tag post">POST</span> /api/privado
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('mensajes-privado')">
+            <span class="method-tag post">POST</span> /api/privado/{token_chat}
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('enviar-mensaje-privado')">
+            <span class="method-tag post">POST</span> /api/privado/{chat_token}/mensaje
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('salir-chat-privado')">
+            <span class="method-tag post">POST</span> /api/privado/{chat_token}/salir
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('eliminar-chat-privado')">
+            <span class="method-tag delete">DELETE</span> /api/privado/{chat_token}
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('invitar-usuario')">
+            <span class="method-tag post">POST</span> /api/invitar/{user_token}
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('rechazar-invitacion')">
+            <span class="method-tag post">POST</span> /api/invitar/{invitacion_token}/rechazar
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('aceptar-invitacion')">
+            <span class="method-tag post">POST</span> /api/invitar/{invitacion_token}/aceptar
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('cancelar-invitacion')">
+            <span class="method-tag delete">DELETE</span> /api/invitar/{invitacion_token}
+        </div>
+        <div class="sidebar-item" onclick="scrollToSection('docs')">
+            <span class="method-tag get">GET</span> /api/docs
+        </div>
+    </aside>
+
+    <main class="content">
+        <h1>Red Social API - Documentación</h1>
+        
+        <div class="info-box">
+            <strong>Base URL:</strong> http://localhost/RedSocial/public<br>
+            <strong>Formato de respuesta:</strong> JSON<br>
+            <strong>Autenticación:</strong> La mayoría de endpoints requieren api_key y token_user en el body
+        </div>
+
+        <!-- CONEXIÓN -->
+        <div class="section" id="conexion">
+            <h2>CONEXIÓN</h2>
+            
+            <div class="endpoint">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/conexion</span>
+                    <span class="badge public">Público</span>
+                </div>
+                <div class="descripcion">Verificar conexión exitosa con la API</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• apikey (tipo: string, ancho: 32)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body:</strong><br>
+                    <pre style="margin: 5px 0;">{"apikey": "tu_api_key_aqui"}</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Conexión exitosa",
+  "data": {
+    "status": "conectado"
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_009 (401): API key inválida o no proporcionada</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-conexion')">▶ Probar endPoint</button>
+                
+                <div id="test-conexion" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <textarea id="body-conexion">{"apikey": "ABCDEFGHIJK1234567890"}</textarea>
+                    <button onclick="testEndpoint('/api/conexion', 'POST', 'body-conexion', 'response-conexion')">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-conexion')">↑ Volver arriba</button>
+                    <div id="response-conexion" class="response-box"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AUTENTICACIÓN -->
+        <div class="section" id="registro">
+            <h2>AUTENTICACIÓN</h2>
+            <div class="endpoint">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/registro</span>
+                    <span class="badge public">Público</span>
+                </div>
+                <div class="descripcion">Registrar nuevo usuario</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• api_key (tipo: string, ancho: 32)
+• email (tipo: string, ancho: 255)
+• username (tipo: string, ancho: 255)
+• password (tipo: string, ancho: 100)
+• latitud (tipo: float, rango: -90 a 90)
+• longitud (tipo: float, rango: -180 a 180)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body:</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "tu_api_key_aqui",
+  "email": "nuevo@example.com",
+  "username": "usuario",
+  "password": "contraseña123",
+  "latitud": 40.7128,
+  "longitud": -74.0060
+}</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (201):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Usuario registrado exitosamente",
+  "data": {
+    "nombre": "usuario",
+    "email": "nuevo@example.com",
+    "access_token": "token_hex"
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_003 (400): email, username, password, latitud y longitud requeridos
+• AUTH_009 (401): API key inválida o no proporcionada
+• AUTH_004 (409): Email ya registrado
+• AUTH_005 (409): Username ya existe
+• AUTH_008 (400): Datos inválidos o incompletos</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-registro')">▶ Probar endPoint</button>
+                
+                <div id="test-registro" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <textarea id="body-registro">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "email": "nuevo@example.com",
+  "username": "usuario",
+  "password": "contraseña123",
+  "latitud": 40.7128,
+  "longitud": -74.0060
+}</textarea>
+                    <button onclick="testEndpoint('/api/registro', 'POST', 'body-registro', 'response-registro')">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-registro')">↑ Volver arriba</button>
+                    <div id="response-registro" class="response-box"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="login">
+            <div class="endpoint">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/login</span>
+                    <span class="badge public">Público</span>
+                </div>
+                <div class="descripcion">Iniciar sesión con email y contraseña. Devuelve token de usuario.</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• api_key (tipo: string, ancho: 32)
+• email (tipo: string, ancho: 255)
+• password (tipo: string, ancho: 100)
+• latitud (tipo: float, rango: -90 a 90)
+• longitud (tipo: float, rango: -180 a 180)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body:</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "tu_api_key_aqui",
+  "email": "usuario@example.com",
+  "password": "tu_contraseña",
+  "latitud": 40.7128,
+  "longitud": -74.0060
+}</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Login exitoso",
+  "data": {
+    "usuario_id": 1,
+    "username": "miusuario",
+    "email": "usuario@example.com",
+    "token": "token_de_64_caracteres_hex"
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_001 (400): api_key, email, password, latitud y longitud requeridos
+• AUTH_006 (401): API key inválida
+• AUTH_007 (500): Configuración de servidor inválida (API key no configurada)
+• AUTH_002 (401): Credenciales inválidas</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-login')">▶ Probar endPoint</button>
+                
+                <div id="test-login" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <textarea id="body-login">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "email": "usuario@example.com",
+  "password": "tu_contraseña",
+  "latitud": 40.7128,
+  "longitud": -74.0060
+}</textarea>
+                    <button onclick="testEndpoint('/api/login', 'POST', 'body-login', 'response-login')">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-login')">↑ Volver arriba</button>
+                    <div id="response-login" class="response-box"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="logout">
+            <div class="endpoint">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/logout</span>
+                    <span class="badge private">Privado</span>
+                </div>
+                <div class="descripcion">Cerrar sesión</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• access_token (tipo: string, ancho: 64)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body:</strong><br>
+                    <pre style="margin: 5px 0;">{"access_token": "token_hex"}</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Sesión cerrada correctamente",
+  "data": null
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_009 (401): Token inválido o expirado
+• AUTH_500 (500): Error interno al procesar logout</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-logout')">▶ Probar endPoint</button>
+                
+                <div id="test-logout" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <textarea id="body-logout">{"access_token": "token_hex"}</textarea>
+                    <button onclick="testEndpoint('/api/logout', 'POST', 'body-logout', 'response-logout')">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-logout')">↑ Volver arriba</button>
+                    <div id="response-logout" class="response-box"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- USUARIOS -->
+        <div class="section" id="usuarios">
+            <h2>USUARIOS</h2>
+            
+            <div class="endpoint" id="perfil">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/usuarios/perfil</span>
+                    <span class="badge private">Privado</span>
+                </div>
+                <div class="descripcion">Obtener información completa del usuario autenticado actual.</div>
+                
+                <div style="background: #d1ecf1; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Acceso:</strong> En el body enviar <code>api_key</code> y <code>token_user</code>.
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body (JSON):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "tu_api_key_aqui",
+  "token_user": "token_del_usuario_logeado"
+}</pre>
+                </div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <ul style="margin: 5px 0; padding-left: 20px;">
+                        <li><code>usuario_id</code>: ID único del usuario</li>
+                        <li><code>username</code>: Nombre de usuario</li>
+                        <li><code>email</code>: Correo electrónico</li>
+                        <li><code>en_linea</code>: Estado de conexión (boolean)</li>
+                        <li><code>latitud</code>: Coordenada de latitud</li>
+                        <li><code>longitud</code>: Coordenada de longitud</li>
+                        <li><code>ultima_conexion</code>: Fecha y hora de última conexión (formato: YYYY-MM-DD HH:mm:ss)</li>
+                    </ul>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Perfil obtenido",
+  "data": {
+    "usuario_id": 1,
+    "username": "miusuario",
+    "email": "usuario@example.com",
+    "en_linea": true,
+    "latitud": 40.4168,
+    "longitud": -3.7038,
+    "ultima_conexion": "2026-02-02 14:30:00"
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_001 (400): api_key y token_user requeridos
+• AUTH_006 (401): API key inválida
+• AUTH_009 (401): Token inválido o expirado
+• USER_001 (404): Usuario no encontrado</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-perfil')">▶ Probar endPoint</button>
+                
+                <div id="test-perfil" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <textarea id="body-perfil">{"api_key": "ABCDEFGHIJK1234567890", "token_user": "token_del_usuario_logeado"}</textarea>
+                    <button onclick="testEndpoint('/api/usuarios/perfil', 'POST', 'body-perfil', 'response-perfil')">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-perfil')">↑ Volver arriba</button>
+                    <div id="response-perfil" class="response-box"></div>
+                </div>
+            </div>
+            
+            <div class="endpoint" id="perfil-update">
+                <div>
+                    <span class="method put">PUT</span>
+                    <span class="ruta">/api/usuarios/perfil</span>
+                    <span class="badge private">Privado</span>
+                </div>
+                <div class="descripcion">Actualizar información del perfil del usuario autenticado.</div>
+                
+                <div style="background: #d1ecf1; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Acceso:</strong> En el body enviar <code>api_key</code> y <code>token_user</code>.
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body (JSON):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "tu_api_key_aqui",
+  "token_user": "token_del_usuario_logeado",
+  "username": "nuevo_nombre",
+  "email": "nuevo@email.com",
+  "password": "nueva_contraseña",
+  "latitud": 40.4200,
+  "longitud": -3.7100,
+  "en_linea": true
+}</pre>
+                    <small><strong>Nota:</strong> Todos los campos son opcionales excepto api_key y token_user. Solo se actualizarán los campos enviados.</small>
+                </div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Campos actualizables:</strong><br>
+                    <ul style="margin: 5px 0; padding-left: 20px;">
+                        <li><code>username</code>: Nuevo nombre de usuario (opcional)</li>
+                        <li><code>email</code>: Nuevo correo electrónico (opcional)</li>
+                        <li><code>password</code>: Nueva contraseña (opcional, se encripta automáticamente)</li>
+                        <li><code>latitud</code>: Nueva coordenada de latitud (opcional)</li>
+                        <li><code>longitud</code>: Nueva coordenada de longitud (opcional)</li>
+                        <li><code>en_linea</code>: Estado online/offline - true/false (opcional)</li>
+                    </ul>
+                    <small><strong>Nota:</strong> La <code>ultima_conexion</code> se actualiza automáticamente al hacer cualquier actualización del perfil.</small>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Perfil actualizado",
+  "data": {
+    "usuario_id": 1,
+    "username": "nuevo_nombre",
+    "email": "nuevo@email.com",
+    "latitud": 40.42,
+    "longitud": -3.71,
+    "en_linea": true,
+    "ultima_conexion": "2026-02-04 12:30:00"
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_001 (400): api_key y token_user requeridos
+• AUTH_006 (401): API key inválida
+• AUTH_009 (401): Token inválido o expirado
+• USER_001 (404): Usuario no encontrado
+• USER_002 (409): Email ya está en uso
+• USER_003 (400): Datos inválidos para actualización</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-perfil-update')">▶ Probar endPoint</button>
+                
+                <div id="test-perfil-update" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <textarea id="body-perfil-update">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "token_user": "token_del_usuario_logeado",
+  "username": "nuevo_nombre",
+  "email": "nuevo@email.com",
+  "password": "nueva_password",
+  "latitud": 40.4200,
+  "longitud": -3.7100,
+  "en_linea": true
+}</textarea>
+                    <button onclick="testEndpoint('/api/usuarios/perfil', 'PUT', 'body-perfil-update', 'response-perfil-update')">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-perfil-update')">↑ Volver arriba</button>
+                    <div id="response-perfil-update" class="response-box"></div>
+                </div>
+            </div>
+            
+            <div class="endpoint">
+                <div>
+                    <span class="method get">GET/POST</span>
+                    <span class="ruta">/api/usuarios</span>
+                    <span class="badge private">Privado</span>
+                </div>
+                <div class="descripcion">Listar usuarios cercanos en un radio de 0-5 km ordenados por proximidad.</div>
+                
+                <div style="background: #d1ecf1; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Acceso:</strong> En el body enviar siempre <code>api_key</code> y <code>token_user</code> junto a otros parámetros opcionales.
+                </div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• api_key (tipo: string, ancho: 32)
+• token_user (tipo: string, ancho: 64)
+• lat (tipo: float, rango: -90 a 90)
+• lon (tipo: float, rango: -180 a 180)
+• page (opcional) (tipo: integer, mínimo: 1)
+• per_page (opcional) (tipo: integer, rango: 1-100)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body (JSON):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "tu_api_key",
+  "token_user": "token_hex",
+  "lat": 40.4168,
+  "lon": -3.7038,
+  "page": 1,
+  "per_page": 20
+}</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Usuarios cercanos",
+  "data": {
+    "usuarios": [
+      {
+        "usuario_id": 2,
+        "username": "otro",
+        "email": "otro@example.com",
+        "en_linea": false,
+        "distancia_km": 0.523
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "per_page": 20
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Errores posibles:</strong><br>
+                    <pre style="margin: 5px 0;">AUTH_001 - api_key y token_user requeridos
+AUTH_006 - API key inválida
+AUTH_009 - Token inválido o expirado
+GEO_001 - Coordenadas de geolocalización requeridas</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-usuarios')">▶ Probar endPoint</button>
+                
+                <div id="test-usuarios" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <textarea id="body-usuarios">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "token_user": "token_hex",
+  "lat": 40.4168,
+  "lon": -3.7038,
+  "page": 1,
+  "per_page": 20
+}</textarea>
+                    <button onclick="testEndpoint('/api/usuarios', 'POST', 'body-usuarios', 'response-usuarios')">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-usuarios')">↑ Volver arriba</button>
+                    <div id="response-usuarios" class="response-box"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="usuario-token">
+            <div class="endpoint">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/usuarios/{token}</span>
+                    <span class="badge private">Privado</span>
+                </div>
+                <div class="descripcion">Obtener información pública de un usuario específico filtrada por el token del usuario objetivo.</div>
+                
+                <div style="background: #d1ecf1; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Acceso:</strong> En el body enviar la <code>api_key</code> (clave de la API) y <code>token_user</code> (token del usuario logeado que solicita la información).
+                </div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• api_key (tipo: string, ancho: 32)
+• token_user (tipo: string, ancho: 64)
+• {token} en URL (tipo: string, ancho: 64)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body (JSON):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "tu_api_key",
+  "token_user": "token_del_usuario_logeado"
+}</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Usuario obtenido",
+  "data": {
+    "usuario_id": 2,
+    "username": "otro",
+    "en_linea": false,
+    "latitud": 40.417,
+    "longitud": -3.704
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Errores posibles:</strong><br>
+                    <pre style="margin: 5px 0;">AUTH_001 - api_key y token_user requeridos
+AUTH_006 - API key inválida
+AUTH_009 - Token inválido o expirado
+USER_001 - Usuario objetivo no encontrado</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-usuario-token')">▶ Probar endPoint</button>
+                
+                <div id="test-usuario-token" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <textarea id="body-usuario-token">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "token_user": "token_del_usuario_logeado"
+}</textarea>
+                    <input type="text" id="token-param" placeholder="Token del usuario objetivo" style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ddd; border-radius:3px;">
+                    <button onclick="testEndpointWithParam('/api/usuarios/', 'POST', 'token-param', 'body-usuario-token', 'response-usuario-token')">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-usuario-token')">↑ Volver arriba</button>
+                    <div id="response-usuario-token" class="response-box"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="usuario-delete">
+            <div class="endpoint">
+                <div>
+                    <span class="method delete">DELETE</span>
+                    <span class="ruta">/api/usuarios/{token}</span>
+                    <span class="badge private">Privado</span>
+                </div>
+                <div class="descripcion">Eliminar cuenta de usuario identificada por el token. Solo el propio usuario o un administrador pueden eliminarla.</div>
+                
+                <div style="background: #d1ecf1; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Acceso:</strong> En el body enviar <code>api_key</code> y <code>token_user</code> (token del usuario logeado que solicita la eliminación).
+                </div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• api_key (tipo: string, ancho: 32)
+• token_user (tipo: string, ancho: 64)
+• {token} en URL (tipo: string, ancho: 64)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body (JSON):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "tu_api_key",
+  "token_user": "token_del_usuario_logeado"
+}</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Usuario eliminado",
+  "data": {
+    "usuario_id": 2,
+    "deleted": true
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Errores posibles:</strong><br>
+                    <pre style="margin: 5px 0;">AUTH_001 - api_key y token_user requeridos
+AUTH_006 - API key inválida
+AUTH_009 - Token inválido o expirado
+AUTH_011 - No autorizado para eliminar este usuario
+USER_001 - Usuario no encontrado</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-usuario-delete')">▶ Probar endPoint</button>
+                
+                <div id="test-usuario-delete" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <textarea id="body-usuario-delete">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "token_user": "token_del_usuario_logeado"
+}</textarea>
+                    <input type="text" id="delete-token-param" placeholder="Token del usuario a eliminar" style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ddd; border-radius:3px;">
+                    <button onclick="testEndpointWithParam('/api/usuarios/', 'DELETE', 'delete-token-param', 'body-usuario-delete', 'response-usuario-delete')">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-usuario-delete')">↑ Volver arriba</button>
+                    <div id="response-usuario-delete" class="response-box"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BLOQUEAR USUARIO -->
+        <div class="section" id="bloquear-usuario">
+            <h2>BLOQUEAR USUARIO</h2>
+            <div class="endpoint">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/bloqueo/bloquear</span>
+                    <span class="badge private">Requiere Token</span>
+                </div>
+                <div class="descripcion">Permite a un usuario bloquear a otro usuario. Una vez bloqueado, ambos usuarios no podrán interactuar entre sí.</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• api_key (tipo: string, ancho: 32, requerido)
+• token_user (tipo: string, ancho: 64, requerido - token del usuario que bloquea)
+• usuario_bloquear_token (tipo: string, ancho: 64, requerido - token del usuario a bloquear)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body (JSON):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "token_user": "token_del_usuario_que_bloquea",
+  "usuario_bloquear_token": "token_del_usuario_a_bloquear"
+}</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Usuario bloqueado exitosamente",
+  "data": {
+    "bloqueo_id": 1,
+    "usuario_bloqueador_id": 5,
+    "usuario_bloqueado_id": 8,
+    "fecha_bloqueo": "2026-02-04 10:30:00"
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Errores posibles:</strong><br>
+                    <pre style="margin: 5px 0;">AUTH_001 - api_key y token_user requeridos
+AUTH_006 - API key inválida
+AUTH_007 - Configuración de servidor inválida
+AUTH_009 - Token inválido o expirado
+AUTH_010 - Usuario bloqueador no encontrado
+BLOCK_001 - usuario_bloquear_token requerido
+BLOCK_002 - Token del usuario a bloquear inválido
+BLOCK_003 - No puedes bloquearte a ti mismo
+BLOCK_004 - Usuario a bloquear no encontrado
+BLOCK_005 - Este usuario ya está bloqueado</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-bloquear-usuario')">▶ Probar endPoint</button>
+                
+                <div id="test-bloquear-usuario" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <textarea id="body-bloquear-usuario">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "token_user": "token_del_usuario_que_bloquea",
+  "usuario_bloquear_token": "token_del_usuario_a_bloquear"
+}</textarea>
+                    <button onclick="testEndpoint('/api/bloqueo/bloquear', 'POST', 'body-bloquear-usuario', 'response-bloquear-usuario')">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-bloquear-usuario')">↑ Volver arriba</button>
+                    <div id="response-bloquear-usuario" class="response-box"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DESBLOQUEAR USUARIO -->
+        <div class="section" id="desbloquear-usuario">
+            <h2>DESBLOQUEAR USUARIO</h2>
+            <div class="endpoint">
+                <div>
+                    <span class="method delete">DELETE</span>
+                    <span class="ruta">/api/bloqueo/desbloquear</span>
+                    <span class="badge private">Requiere Token</span>
+                </div>
+                <div class="descripcion">Permite a un usuario desbloquear a otro usuario previamente bloqueado. Esto elimina el bloqueo y permite nuevamente la interacción entre ambos usuarios.</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• api_key (tipo: string, ancho: 32, requerido)
+• token_user (tipo: string, ancho: 64, requerido - token del usuario que desbloquea)
+• user_token (tipo: string, ancho: 64, requerido - token del usuario bloqueado)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body (JSON):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "token_user": "token_del_usuario_que_desbloquea",
+  "user_token": "token_del_usuario_bloqueado"
+}</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Usuario desbloqueado exitosamente",
+  "data": {
+    "bloqueo_id": 1,
+    "usuario_desbloqueador_id": 5,
+    "usuario_desbloqueado_id": 8,
+    "desbloqueado": true
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Errores posibles:</strong><br>
+                    <pre style="margin: 5px 0;">AUTH_001 - api_key y token_user requeridos
+AUTH_006 - API key inválida
+AUTH_007 - Configuración de servidor inválida
+AUTH_009 - Token inválido o expirado
+AUTH_010 - Usuario no encontrado
+UNBLOCK_001 - user_token del usuario bloqueado requerido
+UNBLOCK_002 - Token del usuario bloqueado inválido
+UNBLOCK_003 - Usuario bloqueado no encontrado
+UNBLOCK_004 - No existe un bloqueo activo con este usuario</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-desbloquear-usuario')">▶ Probar endPoint</button>
+                
+                <div id="test-desbloquear-usuario" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <textarea id="body-desbloquear-usuario">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "token_user": "token_del_usuario_que_desbloquea",
+  "user_token": "token_del_usuario_bloqueado"
+}</textarea>
+                    <button onclick="testEndpoint('/api/bloqueo/desbloquear', 'DELETE', 'body-desbloquear-usuario', 'response-desbloquear-usuario')">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-desbloquear-usuario')">↑ Volver arriba</button>
+                    <div id="response-desbloquear-usuario" class="response-box"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LISTAR USUARIOS BLOQUEADOS -->
+        <div class="section" id="listar-bloqueados">
+            <h2>LISTAR USUARIOS BLOQUEADOS</h2>
+            <div class="endpoint">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/bloqueados</span>
+                    <span class="badge private">Requiere Token</span>
+                </div>
+                <div class="descripcion">Obtiene la lista de todos los usuarios que el usuario autenticado ha bloqueado, ordenados por fecha de bloqueo (más reciente primero).</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• api_key (tipo: string, ancho: 32, requerido)
+• token_user (tipo: string, ancho: 64, requerido - token del usuario autenticado)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body (JSON):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "token_user": "token_del_usuario_autenticado"
+}</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Lista de usuarios bloqueados",
+  "data": {
+    "total": 2,
+    "bloqueados": [
+      {
+        "bloqueo_id": 5,
+        "usuario_id": 8,
+        "username": "maria",
+        "email": "maria@example.com",
+        "en_linea": false,
+        "fecha_bloqueo": "2026-02-04 15:30:00"
+      },
+      {
+        "bloqueo_id": 3,
+        "usuario_id": 12,
+        "username": "carlos",
+        "email": "carlos@example.com",
+        "en_linea": true,
+        "fecha_bloqueo": "2026-02-03 10:15:00"
+      }
+    ]
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Errores posibles:</strong><br>
+                    <pre style="margin: 5px 0;">AUTH_001 - api_key y token_user requeridos
+AUTH_006 - API key inválida
+AUTH_007 - Configuración de servidor inválida
+AUTH_009 - Token inválido o expirado
+AUTH_010 - Usuario no encontrado</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-listar-bloqueados')">▶ Probar endPoint</button>
+                
+                <div id="test-listar-bloqueados" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <textarea id="body-listar-bloqueados">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "token_user": "token_del_usuario_autenticado"
+}</textarea>
+                    <button onclick="testEndpoint('/api/bloqueados', 'POST', 'body-listar-bloqueados', 'response-listar-bloqueados')">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-listar-bloqueados')">↑ Volver arriba</button>
+                    <div id="response-listar-bloqueados" class="response-box"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACTUALIZAR -->
+        <div class="section" id="actualizar">
+            <h2>ACTUALIZACIÓN EN TIEMPO REAL</h2>
+            <div class="endpoint">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/actualizar</span>
+                    <span class="badge auth">Requiere Token</span>
+                </div>
+                <div class="descripcion">Actualiza la ubicación del usuario y obtiene cambios recientes (mensajes nuevos, usuarios online, invitaciones a chats).</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• api_key (tipo: string, requerido)
+• user_token (tipo: string, requerido - token del usuario)
+• token_sala (tipo: string, requerido - token del chat, usar CHAT_PUBLICO_GENERAL_TOKEN_FIJO_12345 para el chat general)
+• ultimo_mensaje_id (tipo: integer, requerido - ID del último mensaje leído)
+• latitud (tipo: float, opcional)
+• longitud (tipo: float, opcional)
+• ultima_actualizacion (tipo: string datetime, opcional - formato: Y-m-d H:i:s)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body:</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "user_token": "tu_token_aqui",
+  "token_sala": "CHAT_PUBLICO_GENERAL_TOKEN_FIJO_12345",
+  "ultimo_mensaje_id": 120,
+  "latitud": 40.7128,
+  "longitud": -74.0060,
+  "ultima_actualizacion": "2026-02-03 10:30:00"
+}</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Actualización exitosa",
+  "data": {
+    "mensajes_nuevos": [
+      {
+        "id": 1,
+        "chat_token": "CHAT_TEMP_A7B3F9E2D4C8A1B5E6D9F2C8A3B7E1D4",
+        "usuario_id": 2,
+        "username": "juan",
+        "contenido": "Hola!",
+        "fecha_envio": "2026-02-03 10:32:15",
+        "es_sistema": false
+      }
+    ],
+    "usuarios_online": [
+      {
+        "id": 2,
+        "username": "maria",
+        "email": "maria@example.com",
+        "latitud": 40.7589,
+        "longitud": -73.9851,
+        "ultima_conexion": "2026-02-03 10:34:50"
+      }
+    ],
+    "invitaciones": [
+      {
+        "id": 3,
+        "chat_token": "CHAT_TEMP_F3F9F5E8D0C4A7B1E2D5F8C4A9B3E7D0",
+        "fecha_union": "2026-02-03 10:31:00"
+      }
+    ],
+    "timestamp": "2026-02-03 10:35:00"
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_001 (400): api_key requerido
+• AUTH_003 (400): user_token requerido
+• CHAT_001 (400): token_sala requerido
+• MSG_001 (400): ultimo_mensaje_id requerido
+• AUTH_006 (401): API key inválida
+• AUTH_002 (401): Token inválido o expirado
+• AUTH_007 (500): Configuración de servidor inválida
+• USER_001 (404): Usuario no encontrado
+• UPDATE_001 (500): Error al procesar actualización</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-actualizar')">▶ Probar endPoint</button>
+                
+                <div id="test-actualizar" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <textarea id="body-actualizar">{"api_key": "ABCDEFGHIJK1234567890", "user_token": "tu_token_aqui", "token_sala": "CHAT_PUBLICO_GENERAL_TOKEN_FIJO_12345", "ultimo_mensaje_id": 120, "latitud": 40.7128, "longitud": -74.0060, "ultima_actualizacion": "2026-02-03 10:30:00"}</textarea>
+                    <button onclick="testEndpoint('/api/actualizar', 'POST', 'body-actualizar', 'response-actualizar')">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-actualizar')">↑ Volver arriba</button>
+                    <div id="response-actualizar" class="response-box"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHAT GENERAL -->
+        <div class="section" id="general-mensaje">
+            <h2>CHAT GENERAL</h2>
+            <div class="endpoint">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/general/mensaje</span>
+                    <span class="badge auth">Requiere Token</span>
+                </div>
+                <div class="descripcion">Enviar un mensaje al chat público/general. El chat general se crea automáticamente si no existe.</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• api_key (tipo: string, requerido)
+• user_token (tipo: string, requerido - token del usuario)
+• chat_token (tipo: string, requerido - token del chat público)
+• contenido (tipo: string, requerido - mensaje a enviar)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body:</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "user_token": "tu_token_aqui",
+  "chat_token": "CHAT_PUBLICO_GENERAL_TOKEN_FIJO_12345",
+  "contenido": "Hola a todos en el chat público!"
+}</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (201):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Mensaje enviado al chat público",
+  "data": {
+    "mensaje_id": 1,
+    "chat_token": "CHAT_PUBLICO_GENERAL_TOKEN_FIJO_12345",
+    "usuario_id": 1,
+    "username": "usuario",
+    "contenido": "Hola a todos en el chat público!",
+    "fecha_envio": "2026-02-04 10:30:00"
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_001 (400): api_key requerido
+• AUTH_003 (400): user_token requerido
+• CHAT_002 (400): chat_token requerido
+• MSG_002 (400): Contenido del mensaje requerido
+• AUTH_006 (401): API key inválida
+• AUTH_002 (401): Token inválido o expirado
+• CHAT_003 (400): Token de chat inválido
+• AUTH_007 (500): Configuración de servidor inválida
+• USER_001 (404): Usuario no encontrado
+• MSG_003 (500): Error al enviar mensaje</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-general-mensaje')">▶ Probar endPoint</button>
+                
+                <div id="test-general-mensaje" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <textarea id="body-general-mensaje">{"api_key": "ABCDEFGHIJK1234567890", "user_token": "tu_token_aqui", "chat_token": "CHAT_PUBLICO_GENERAL_TOKEN_FIJO_12345", "contenido": "Hola a todos en el chat público!"}</textarea>
+                    <button onclick="testEndpoint('/api/general/mensaje', 'POST', 'body-general-mensaje', 'response-general-mensaje')">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-general-mensaje')">↑ Volver arriba</button>
+                    <div id="response-general-mensaje" class="response-box"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LISTAR USUARIOS CHAT PÚBLICO -->
+        <div class="section" id="general-usuarios">
+            <div class="endpoint">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/general/usuarios</span>
+                    <span class="badge auth">Requiere Token</span>
+                </div>
+                <div class="descripcion">Obtener la lista de todos los usuarios que están en el chat público/general.</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• api_key (tipo: string, requerido)
+• user_token (tipo: string, requerido - token del usuario)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body:</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "user_token": "tu_token_aqui"
+}</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Usuarios en chat público",
+  "data": {
+    "usuarios": [
+      {
+        "usuario_id": 1,
+        "username": "usuario1",
+        "email": "usuario1@example.com",
+        "en_linea": true,
+        "fecha_union": "2026-02-04 10:00:00"
+      },
+      {
+        "usuario_id": 2,
+        "username": "usuario2",
+        "email": "usuario2@example.com",
+        "en_linea": false,
+        "fecha_union": "2026-02-04 09:30:00"
+      }
+    ],
+    "total": 2,
+    "chat_token": "CHAT_PUBLICO_GENERAL_TOKEN_FIJO_12345"
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_001 (400): api_key requerido
+• AUTH_003 (400): user_token requerido
+• AUTH_006 (401): API key inválida
+• AUTH_002 (401): Token inválido o expirado
+• AUTH_007 (500): Configuración de servidor inválida
+• USER_001 (404): Usuario no encontrado
+• CHAT_004 (404): Chat público aún no ha sido creado</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-general-usuarios')">▶ Probar endPoint</button>
+                
+                <div id="test-general-usuarios" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <textarea id="body-general-usuarios">{"api_key": "ABCDEFGHIJK1234567890", "user_token": "tu_token_aqui"}</textarea>
+                    <button onclick="testEndpoint('/api/general/usuarios', 'POST', 'body-general-usuarios', 'response-general-usuarios')">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-general-usuarios')">↑ Volver arriba</button>
+                    <div id="response-general-usuarios" class="response-box"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CREAR CHAT PRIVADO -->
+        <div class="section" id="chat-privado">
+            <h2>Crear Nuevo Chat Privado</h2>
+            <div class="endpoint">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/privado</span>
+                    <span class="badge auth">Requiere Token</span>
+                </div>
+                <div class="descripcion">Crea un nuevo chat privado entre dos usuarios. Si ya existe un chat entre ambos usuarios, devuelve el chat existente.</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• api_key (tipo: string, requerido)
+• user_token (tipo: string, requerido - token del usuario que crea el chat)
+• destinatario_token (tipo: string, requerido - token del usuario con quien chatear)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body:</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "user_token": "tu_token_aqui",
+  "destinatario_token": "token_del_destinatario"
+}</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (201 - Chat creado / 200 - Chat ya existe):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Chat privado creado exitosamente",
+  "data": {
+    "chat_token": "a1b2c3d4e5f6...",
+    "chat_id": 5,
+    "tipo": "privado",
+    "temporal": true,
+    "fecha_creacion": "2026-02-04 12:00:00",
+    "usuarios": [
+      {
+        "usuario_id": 1,
+        "username": "usuario1",
+        "email": "usuario1@example.com"
+      },
+      {
+        "usuario_id": 2,
+        "username": "usuario2",
+        "email": "usuario2@example.com"
+      }
+    ]
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_001 (400): api_key requerido
+• AUTH_003 (400): user_token requerido
+• USER_005 (400): destinatario_token requerido
+• AUTH_006 (401): API key inválida
+• AUTH_002 (401): Token inválido o expirado
+• AUTH_008 (401): Token de destinatario inválido o expirado
+• CHAT_006 (400): No puedes crear un chat contigo mismo
+• AUTH_007 (500): Configuración de servidor inválida
+• USER_001 (404): Usuario creador no encontrado
+• USER_006 (404): Usuario destinatario no encontrado
+• CHAT_007 (500): Error al crear chat privado</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-chat-privado')">▶ Probar endPoint</button>
+                
+                <div id="test-chat-privado" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <textarea id="body-chat-privado">{"api_key": "ABCDEFGHIJK1234567890", "user_token": "tu_token_aqui", "destinatario_token": "token_del_destinatario"}</textarea>
+                    <button onclick="testEndpoint('/api/privado', 'POST', 'body-chat-privado', 'response-chat-privado')">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-chat-privado')">↑ Volver arriba</button>
+                    <div id="response-chat-privado" class="response-box"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OBTENER MENSAJES CHAT PRIVADO -->
+        <div class="section" id="mensajes-privado">
+            <h2>Obtener Mensajes de Chat Privado</h2>
+            <div class="endpoint">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/privado/{token_chat}</span>
+                    <span class="badge auth">Requiere Token</span>
+                </div>
+                <div class="descripcion">Obtiene todos los mensajes de un chat privado. El usuario debe pertenecer al chat para poder ver los mensajes.</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• token_chat (tipo: string, requerido - en la URL)
+• api_key (tipo: string, requerido - en body)
+• user_token (tipo: string, requerido - en body)
+• desde_id (tipo: integer, opcional - query param)
+• limite (tipo: integer, opcional - query param, default: 100, máximo: 500)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body:</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "user_token": "tu_token_aqui"
+}</pre>
+                    <strong>URL ejemplo:</strong><br>
+                    <pre style="margin: 5px 0;">/api/privado/a1b2c3d4e5f6...
+/api/privado/a1b2c3d4e5f6...?desde_id=10&limite=50</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Mensajes obtenidos exitosamente",
+  "data": {
+    "mensajes": [
+      {
+        "mensaje_id": 1,
+        "usuario_id": 1,
+        "username": "usuario1",
+        "mensaje": "Hola, ¿cómo estás?",
+        "fecha_envio": "2026-02-04 10:00:00",
+        "es_sistema": false
+      },
+      {
+        "mensaje_id": 2,
+        "usuario_id": 2,
+        "username": "usuario2",
+        "mensaje": "Bien, gracias. ¿Y tú?",
+        "fecha_envio": "2026-02-04 10:01:30",
+        "es_sistema": false
+      }
+    ],
+    "total": 2,
+    "chat_token": "a1b2c3d4e5f6...",
+    "limite": 100,
+    "desde_id": null
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_001 (400): api_key requerido
+• AUTH_003 (400): user_token requerido
+• AUTH_006 (401): API key inválida
+• AUTH_002 (401): Token inválido o expirado
+• AUTH_007 (500): Configuración de servidor inválida
+• USER_001 (404): Usuario no encontrado
+• CHAT_008 (404): Chat no encontrado
+• CHAT_009 (400): Este endpoint es solo para chats privados
+• CHAT_010 (403): No tienes acceso a este chat
+• MSG_004 (500): Error al obtener mensajes</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-mensajes-privado')">▶ Probar endPoint</button>
+                
+                <div id="test-mensajes-privado" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <label>Token del chat (en URL):</label>
+                    <input type="text" id="token-chat-privado" placeholder="a1b2c3d4e5f6..." style="width:100%; padding:5px; margin:5px 0;">
+                    <label>Body:</label>
+                    <textarea id="body-mensajes-privado">{"api_key": "ABCDEFGHIJK1234567890", "user_token": "tu_token_aqui"}</textarea>
+                    <label>Parámetros query (opcional):</label>
+                    <input type="text" id="query-mensajes-privado" placeholder="?desde_id=10&limite=50" style="width:100%; padding:5px; margin:5px 0;">
+                    <button onclick="testEndpointDynamic()">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-mensajes-privado')">↑ Volver arriba</button>
+                    <div id="response-mensajes-privado" class="response-box"></div>
+                    <script>
+                    function testEndpointDynamic() {
+                        const tokenChat = document.getElementById('token-chat-privado').value;
+                        const queryParams = document.getElementById('query-mensajes-privado').value;
+                        const url = '/api/privado/' + tokenChat + (queryParams || '');
+                        testEndpoint(url, 'POST', 'body-mensajes-privado', 'response-mensajes-privado');
+                    }
+                    </script>
+                </div>
+            </div>
+        </div>
+
+        <!-- ENVIAR MENSAJE CHAT PRIVADO -->
+        <div class="section" id="enviar-mensaje-privado">
+            <h2>Enviar Mensaje a Chat Privado</h2>
+            <div class="endpoint">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/privado/{chat_token}/mensaje</span>
+                    <span class="badge auth">Requiere Token</span>
+                </div>
+                <div class="descripcion">Envía un mensaje a un chat privado específico. El usuario debe pertenecer al chat para poder enviar mensajes.</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• chat_token (tipo: string, requerido - en la URL)
+• api_key (tipo: string, requerido - en body)
+• user_token (tipo: string, requerido - en body)
+• mensaje (tipo: string, requerido - contenido del mensaje)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body:</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "user_token": "tu_token_aqui",
+  "mensaje": "Hola, ¿cómo estás?"
+}</pre>
+                    <strong>URL ejemplo:</strong><br>
+                    <pre style="margin: 5px 0;">/api/privado/a1b2c3d4e5f6.../mensaje</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (201):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Mensaje enviado exitosamente",
+  "data": {
+    "mensaje_id": 15,
+    "chat_id": 5,
+    "chat_token": "a1b2c3d4e5f6...",
+    "usuario_id": 1,
+    "username": "usuario1",
+    "mensaje": "Hola, ¿cómo estás?",
+    "fecha_envio": "2026-02-04 14:30:00"
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_001 (400): api_key requerido
+• AUTH_003 (400): user_token requerido
+• MSG_002 (400): Mensaje requerido
+• AUTH_006 (401): API key inválida
+• AUTH_002 (401): Token inválido o expirado
+• AUTH_007 (500): Configuración de servidor inválida
+• USER_001 (404): Usuario no encontrado
+• CHAT_008 (404): Chat no encontrado
+• CHAT_009 (400): Este endpoint es solo para chats privados
+• CHAT_010 (403): No tienes acceso a este chat
+• MSG_003 (500): Error al enviar mensaje</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-enviar-mensaje-privado')">▶ Probar endPoint</button>
+                
+                <div id="test-enviar-mensaje-privado" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <label>Token del chat (en URL):</label>
+                    <input type="text" id="chat-token-mensaje" placeholder="a1b2c3d4e5f6..." style="width:100%; padding:5px; margin:5px 0;">
+                    <label>Body:</label>
+                    <textarea id="body-enviar-mensaje-privado">{"api_key": "ABCDEFGHIJK1234567890", "user_token": "tu_token_aqui", "mensaje": "Hola, ¿cómo estás?"}</textarea>
+                    <button onclick="testEndpointEnviarMensaje()">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-enviar-mensaje-privado')">↑ Volver arriba</button>
+                    <div id="response-enviar-mensaje-privado" class="response-box"></div>
+                    <script>
+                    function testEndpointEnviarMensaje() {
+                        const chatToken = document.getElementById('chat-token-mensaje').value;
+                        const url = '/api/privado/' + chatToken + '/mensaje';
+                        testEndpoint(url, 'POST', 'body-enviar-mensaje-privado', 'response-enviar-mensaje-privado');
+                    }
+                    </script>
+                </div>
+            </div>
+        </div>
+
+        <!-- SALIR DE CHAT PRIVADO -->
+        <div class="section" id="salir-chat-privado">
+            <h2>Salir de un Chat Privado</h2>
+            <div class="endpoint">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/privado/{chat_token}/salir</span>
+                    <span class="badge auth">Requiere Token</span>
+                </div>
+                <div class="descripcion">Abandona un chat privado. Si es el último usuario en salir, el chat y todos sus mensajes se eliminan automáticamente.</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• chat_token (tipo: string, requerido - en la URL)
+• api_key (tipo: string, requerido - en body)
+• user_token (tipo: string, requerido - en body)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body:</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "user_token": "tu_token_aqui"
+}</pre>
+                    <strong>URL ejemplo:</strong><br>
+                    <pre style="margin: 5px 0;">/api/privado/a1b2c3d4e5f6.../salir</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">// Cuando el chat continúa existiendo:
+{
+  "success": true,
+  "message": "Has salido del chat exitosamente",
+  "data": {
+    "usuario_id": 1,
+    "username": "usuario1",
+    "chat_token": "a1b2c3d4e5f6...",
+    "chat_eliminado": false,
+    "usuarios_restantes": 1
+  }
+}
+
+// Cuando eres el último usuario:
+{
+  "success": true,
+  "message": "Has salido del chat y el chat ha sido eliminado",
+  "data": {
+    "usuario_id": 1,
+    "username": "usuario1",
+    "chat_token": "a1b2c3d4e5f6...",
+    "chat_eliminado": true,
+    "usuarios_restantes": 0
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_001 (400): api_key requerido
+• AUTH_003 (400): user_token requerido
+• AUTH_006 (401): API key inválida
+• AUTH_002 (401): Token inválido o expirado
+• AUTH_007 (500): Configuración de servidor inválida
+• USER_001 (404): Usuario no encontrado
+• CHAT_008 (404): Chat no encontrado
+• CHAT_009 (400): Este endpoint es solo para chats privados
+• CHAT_010 (403): No perteneces a este chat
+• CHAT_011 (500): Error al salir del chat</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-salir-chat-privado')">▶ Probar endPoint</button>
+                
+                <div id="test-salir-chat-privado" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <label>Token del chat (en URL):</label>
+                    <input type="text" id="chat-token-salir" placeholder="a1b2c3d4e5f6..." style="width:100%; padding:5px; margin:5px 0;">
+                    <label>Body:</label>
+                    <textarea id="body-salir-chat-privado">{"api_key": "ABCDEFGHIJK1234567890", "user_token": "tu_token_aqui"}</textarea>
+                    <button onclick="testEndpointSalirChat()">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-salir-chat-privado')">↑ Volver arriba</button>
+                    <div id="response-salir-chat-privado" class="response-box"></div>
+                    <script>
+                    function testEndpointSalirChat() {
+                        const chatToken = document.getElementById('chat-token-salir').value;
+                        const url = '/api/privado/' + chatToken + '/salir';
+                        testEndpoint(url, 'POST', 'body-salir-chat-privado', 'response-salir-chat-privado');
+                    }
+                    </script>
+                </div>
+            </div>
+        </div>
+
+        <!-- ELIMINAR CHAT PRIVADO -->
+        <div class="section" id="eliminar-chat-privado">
+            <h2>Eliminar Chat Temporal</h2>
+            <div class="endpoint">
+                <div>
+                    <span class="method delete">DELETE</span>
+                    <span class="ruta">/api/privado/{chat_token}</span>
+                    <span class="badge auth">Requiere Token</span>
+                </div>
+                <div class="descripcion">Elimina un chat temporal completamente, incluyendo todos sus mensajes y relaciones. Solo el creador del chat o un administrador pueden eliminarlo.</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• chat_token (tipo: string, requerido - en la URL)
+• api_key (tipo: string, requerido - en body)
+• user_token (tipo: string, requerido - en body)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body:</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "user_token": "tu_token_aqui"
+}</pre>
+                    <strong>URL ejemplo:</strong><br>
+                    <pre style="margin: 5px 0;">/api/privado/a1b2c3d4e5f6...</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Chat eliminado exitosamente",
+  "data": {
+    "chat_token": "a1b2c3d4e5f6...",
+    "eliminado_por": "usuario1",
+    "es_admin": false
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_001 (400): api_key requerido
+• AUTH_003 (400): user_token requerido
+• AUTH_006 (401): API key inválida
+• AUTH_002 (401): Token inválido o expirado
+• AUTH_007 (500): Configuración de servidor inválida
+• USER_001 (404): Usuario no encontrado
+• CHAT_008 (404): Chat no encontrado
+• CHAT_012 (400): Solo se pueden eliminar chats temporales
+• CHAT_013 (403): Solo el creador del chat o un administrador puede eliminarlo
+• CHAT_014 (500): Error al eliminar chat</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-eliminar-chat-privado')">▶ Probar endPoint</button>
+                
+                <div id="test-eliminar-chat-privado" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <label>Token del chat (en URL):</label>
+                    <input type="text" id="chat-token-eliminar" placeholder="a1b2c3d4e5f6..." style="width:100%; padding:5px; margin:5px 0;">
+                    <label>Body:</label>
+                    <textarea id="body-eliminar-chat-privado">{"api_key": "ABCDEFGHIJK1234567890", "user_token": "tu_token_aqui"}</textarea>
+                    <button onclick="testEndpointEliminarChat()">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-eliminar-chat-privado')">↑ Volver arriba</button>
+                    <div id="response-eliminar-chat-privado" class="response-box"></div>
+                    <script>
+                    function testEndpointEliminarChat() {
+                        const chatToken = document.getElementById('chat-token-eliminar').value;
+                        const url = '/api/privado/' + chatToken;
+                        testEndpoint(url, 'DELETE', 'body-eliminar-chat-privado', 'response-eliminar-chat-privado');
+                    }
+                    </script>
+                </div>
+            </div>
+        </div>
+
+        <!-- INVITAR USUARIO A CHAT -->
+        <div class="section" id="invitar-usuario">
+            <h2>Invitar Usuario a Chat</h2>
+            <div class="endpoint">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/invitar/{user_token}</span>
+                    <span class="badge auth">Requiere Token</span>
+                </div>
+                <div class="descripcion">Envía una invitación a un usuario para unirse a un chat. La invitación se almacena en caché (temporal) y expira en 24 horas. Previene invitaciones duplicadas.</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• user_token (tipo: string, requerido - en la URL, token del usuario invitado)
+• api_key (tipo: string, requerido - en body)
+• user_token (tipo: string, requerido - en body, token del invitador)
+• chat_token (tipo: string, requerido - en body, token del chat)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body:</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "user_token": "token_del_invitador",
+  "chat_token": "a1b2c3d4e5f6..."
+}</pre>
+                    <strong>URL ejemplo:</strong><br>
+                    <pre style="margin: 5px 0;">/api/invitar/token_del_usuario_invitado</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (201):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Invitación enviada exitosamente",
+  "data": {
+    "invitacion_key": "invitation_a1b2c3d4e5f6..._token123...",
+    "invitador": {
+      "id": 1,
+      "username": "usuario1"
+    },
+    "invitado": {
+      "id": 2,
+      "username": "usuario2",
+      "email": "usuario2@example.com"
+    },
+    "chat": {
+      "id": 5,
+      "token": "a1b2c3d4e5f6...",
+      "tipo": "privado"
+    },
+    "expira_en": "86400 segundos (24 horas)"
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_001 (400): api_key requerido
+• AUTH_003 (400): user_token requerido
+• CHAT_002 (400): chat_token requerido
+• AUTH_006 (401): API key inválida
+• AUTH_002 (401): Token inválido o expirado
+• AUTH_008 (401): Token del usuario invitado inválido o expirado
+• INV_001 (400): No puedes invitarte a ti mismo
+• AUTH_007 (500): Configuración de servidor inválida
+• USER_001 (404): Usuario invitador no encontrado
+• USER_007 (404): Usuario invitado no encontrado
+• CHAT_008 (404): Chat no encontrado
+• CHAT_010 (403): No perteneces a este chat
+• INV_002 (400): El usuario ya está en el chat
+• INV_003 (400): Ya existe una invitación pendiente para este usuario
+• INV_004 (500): Error al enviar invitación</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-invitar-usuario')">▶ Probar endPoint</button>
+                
+                <div id="test-invitar-usuario" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <label>Token del usuario invitado (en URL):</label>
+                    <input type="text" id="invited-user-token" placeholder="token_del_usuario_invitado" style="width:100%; padding:5px; margin:5px 0;">
+                    <label>Body:</label>
+                    <textarea id="body-invitar-usuario">{"api_key": "ABCDEFGHIJK1234567890", "user_token": "token_del_invitador", "chat_token": "a1b2c3d4e5f6..."}</textarea>
+                    <button onclick="testEndpointInvitarUsuario()">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-invitar-usuario')">↑ Volver arriba</button>
+                    <div id="response-invitar-usuario" class="response-box"></div>
+                    <script>
+                    function testEndpointInvitarUsuario() {
+                        const invitedToken = document.getElementById('invited-user-token').value;
+                        const url = '/api/invitar/' + invitedToken;
+                        testEndpoint(url, 'POST', 'body-invitar-usuario', 'response-invitar-usuario');
+                    }
+                    </script>
+                </div>
+            </div>
+        </div>
+
+        <!-- RECHAZAR INVITACIÓN -->
+        <div class="section" id="rechazar-invitacion">
+            <h2>Rechazar Invitación a Chat</h2>
+            <div class="endpoint">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/invitar/{invitacion_token}/rechazar</span>
+                    <span class="badge auth">Requiere Token</span>
+                </div>
+                <div class="descripcion">Rechaza una invitación a un chat. Solo el usuario invitado puede rechazar la invitación. La invitación se elimina del caché.</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• invitacion_token (tipo: string, requerido - en la URL, token de la invitación)
+• api_key (tipo: string, requerido - en body)
+• user_token (tipo: string, requerido - en body, token del usuario invitado)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body:</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "user_token": "token_del_usuario_invitado"
+}</pre>
+                    <strong>URL ejemplo:</strong><br>
+                    <pre style="margin: 5px 0;">/api/invitar/invitation_a1b2c3d4e5f6..._token123.../rechazar</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Invitación rechazada exitosamente",
+  "data": {
+    "invitacion_token": "invitation_a1b2c3d4e5f6..._token123...",
+    "invitador": {
+      "id": 1,
+      "username": "usuario1"
+    },
+    "invitado": {
+      "id": 2,
+      "username": "usuario2"
+    },
+    "chat": {
+      "token": "a1b2c3d4e5f6...",
+      "tipo": "privado"
+    }
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_001 (400): api_key requerido
+• AUTH_003 (400): user_token requerido
+• AUTH_006 (401): API key inválida
+• AUTH_002 (401): Token inválido o expirado
+• AUTH_007 (500): Configuración de servidor inválida
+• USER_001 (404): Usuario no encontrado
+• INV_005 (404): Invitación no encontrada o expirada
+• INV_006 (400): Datos de invitación inválidos
+• INV_007 (403): No tienes permiso para rechazar esta invitación
+• INV_008 (500): Error al rechazar invitación</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-rechazar-invitacion')">▶ Probar endPoint</button>
+                
+                <div id="test-rechazar-invitacion" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <label>Token de la invitación (en URL):</label>
+                    <input type="text" id="invitacion-token-rechazar" placeholder="invitation_a1b2c3d4e5f6..._token123..." style="width:100%; padding:5px; margin:5px 0;">
+                    <label>Body:</label>
+                    <textarea id="body-rechazar-invitacion">{"api_key": "ABCDEFGHIJK1234567890", "user_token": "token_del_usuario_invitado"}</textarea>
+                    <button onclick="testEndpointRechazarInvitacion()">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-rechazar-invitacion')">↑ Volver arriba</button>
+                    <div id="response-rechazar-invitacion" class="response-box"></div>
+                    <script>
+                    function testEndpointRechazarInvitacion() {
+                        const invitacionToken = document.getElementById('invitacion-token-rechazar').value;
+                        const url = '/api/invitar/' + invitacionToken + '/rechazar';
+                        testEndpoint(url, 'POST', 'body-rechazar-invitacion', 'response-rechazar-invitacion');
+                    }
+                    </script>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACEPTAR INVITACIÓN -->
+        <div class="section" id="aceptar-invitacion">
+            <h2>Aceptar Invitación a Chat</h2>
+            <div class="endpoint">
+                <div>
+                    <span class="method post">POST</span>
+                    <span class="ruta">/api/invitar/{invitacion_token}/aceptar</span>
+                    <span class="badge auth">Requiere Token</span>
+                </div>
+                <div class="descripcion">Acepta una invitación a un chat y une al usuario invitado al chat. Solo el usuario invitado puede aceptar la invitación. La invitación se elimina del caché después de ser aceptada.</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• invitacion_token (tipo: string, requerido - en la URL, token de la invitación)
+• api_key (tipo: string, requerido - en body)
+• user_token (tipo: string, requerido - en body, token del usuario invitado)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body:</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "user_token": "token_del_usuario_invitado"
+}</pre>
+                    <strong>URL ejemplo:</strong><br>
+                    <pre style="margin: 5px 0;">/api/invitar/invitation_a1b2c3d4e5f6..._token123.../aceptar</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (201):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Te has unido al chat exitosamente",
+  "data": {
+    "invitacion_token": "invitation_a1b2c3d4e5f6..._token123...",
+    "invitador": {
+      "id": 1,
+      "username": "usuario1"
+    },
+    "usuario": {
+      "id": 2,
+      "username": "usuario2"
+    },
+    "chat": {
+      "id": 5,
+      "token": "a1b2c3d4e5f6...",
+      "tipo": "privado"
+    },
+    "fecha_union": "2026-02-04 15:30:00"
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_001 (400): api_key requerido
+• AUTH_003 (400): user_token requerido
+• AUTH_006 (401): API key inválida
+• AUTH_002 (401): Token inválido o expirado
+• AUTH_007 (500): Configuración de servidor inválida
+• USER_001 (404): Usuario no encontrado
+• INV_005 (404): Invitación no encontrada o expirada
+• INV_006 (400): Datos de invitación inválidos
+• INV_009 (403): No tienes permiso para aceptar esta invitación
+• CHAT_008 (404): Chat no encontrado
+• INV_002 (400): Ya estás en este chat
+• INV_010 (500): Error al aceptar invitación</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-aceptar-invitacion')">▶ Probar endPoint</button>
+                
+                <div id="test-aceptar-invitacion" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <label>Token de la invitación (en URL):</label>
+                    <input type="text" id="invitacion-token-aceptar" placeholder="invitation_a1b2c3d4e5f6..._token123..." style="width:100%; padding:5px; margin:5px 0;">
+                    <label>Body:</label>
+                    <textarea id="body-aceptar-invitacion">{"api_key": "ABCDEFGHIJK1234567890", "user_token": "token_del_usuario_invitado"}</textarea>
+                    <button onclick="testEndpointAceptarInvitacion()">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-aceptar-invitacion')">↑ Volver arriba</button>
+                    <div id="response-aceptar-invitacion" class="response-box"></div>
+                    <script>
+                    function testEndpointAceptarInvitacion() {
+                        const invitacionToken = document.getElementById('invitacion-token-aceptar').value;
+                        const url = '/api/invitar/' + invitacionToken + '/aceptar';
+                        testEndpoint(url, 'POST', 'body-aceptar-invitacion', 'response-aceptar-invitacion');
+                    }
+                    </script>
+                </div>
+            </div>
+        </div>
+
+        <!-- CANCELAR INVITACIÓN -->
+        <div class="section" id="cancelar-invitacion">
+            <h2>Cancelar Invitación a Chat</h2>
+            <div class="endpoint">
+                <div>
+                    <span class="method delete">DELETE</span>
+                    <span class="ruta">/api/invitar/{invitacion_token}</span>
+                    <span class="badge auth">Requiere Token</span>
+                </div>
+                <div class="descripcion">Cancela una invitación a un chat. Solo el usuario invitador (quien envió la invitación) puede cancelarla. La invitación se elimina del caché.</div>
+                
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Datos que se reciben:</strong><br>
+                    <pre style="margin: 5px 0;">• invitacion_token (tipo: string, requerido - en la URL, token de la invitación)
+• api_key (tipo: string, requerido - en body)
+• user_token (tipo: string, requerido - en body, token del invitador)</pre>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Body:</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "api_key": "ABCDEFGHIJK1234567890",
+  "user_token": "token_del_invitador"
+}</pre>
+                    <strong>URL ejemplo:</strong><br>
+                    <pre style="margin: 5px 0;">/api/invitar/invitation_a1b2c3d4e5f6..._token123...</pre>
+                </div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Invitación cancelada exitosamente",
+  "data": {
+    "invitacion_token": "invitation_a1b2c3d4e5f6..._token123...",
+    "invitador": {
+      "id": 1,
+      "username": "usuario1"
+    },
+    "invitado": {
+      "id": 2,
+      "username": "usuario2"
+    },
+    "chat": {
+      "token": "a1b2c3d4e5f6...",
+      "tipo": "privado"
+    }
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• AUTH_001 (400): api_key requerido
+• AUTH_003 (400): user_token requerido
+• AUTH_006 (401): API key inválida
+• AUTH_002 (401): Token inválido o expirado
+• AUTH_007 (500): Configuración de servidor inválida
+• USER_001 (404): Usuario no encontrado
+• INV_005 (404): Invitación no encontrada o expirada
+• INV_006 (400): Datos de invitación inválidos
+• INV_011 (403): Solo el invitador puede cancelar esta invitación
+• INV_012 (500): Error al cancelar invitación</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-cancelar-invitacion')">▶ Probar endPoint</button>
+                
+                <div id="test-cancelar-invitacion" class="test-form" style="display:none;">
+                    <h4>Datos que se envían:</h4>
+                    <label>Token de la invitación (en URL):</label>
+                    <input type="text" id="invitacion-token-cancelar" placeholder="invitation_a1b2c3d4e5f6..._token123..." style="width:100%; padding:5px; margin:5px 0;">
+                    <label>Body:</label>
+                    <textarea id="body-cancelar-invitacion">{"api_key": "ABCDEFGHIJK1234567890", "user_token": "token_del_invitador"}</textarea>
+                    <button onclick="testEndpointCancelarInvitacion()">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-cancelar-invitacion')">↑ Volver arriba</button>
+                    <div id="response-cancelar-invitacion" class="response-box"></div>
+                    <script>
+                    function testEndpointCancelarInvitacion() {
+                        const invitacionToken = document.getElementById('invitacion-token-cancelar').value;
+                        const url = '/api/invitar/' + invitacionToken;
+                        testEndpoint(url, 'DELETE', 'body-cancelar-invitacion', 'response-cancelar-invitacion');
+                    }
+                    </script>
+                </div>
+            </div>
+        </div>
+
+        <!-- DOCS -->
+        <div class="section" id="docs">
+            <h2>Documentación JSON</h2>
+            <div class="endpoint">
+                <div>
+                    <span class="method get">GET</span>
+                    <span class="ruta">/api/docs</span>
+                    <span class="badge public">Público</span>
+                </div>
+                <div class="descripcion">Obtener documentación completa en formato JSON con todos los endpoints disponibles.</div>
+                
+                <div style="background: #d4edda; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Respuesta exitosa (200):</strong><br>
+                    <pre style="margin: 5px 0;">{
+  "success": true,
+  "message": "Documentación de API",
+  "data": {
+    "endpoints": { ... },
+    "base_url": "http://localhost/RedSocial/public",
+    "autenticación": "..."
+  }
+}</pre>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
+                    <strong>Posibles errores:</strong><br>
+                    <pre style="margin: 5px 0;">• Este endpoint público no genera errores comunes</pre>
+                </div>
+                
+                <button class="btn-test" onclick="toggleTest('test-docs')">▶ Probar endPoint</button>
+                
+                <div id="test-docs" class="test-form" style="display:none;">
+                    <h4>Este endpoint no requiere body</h4>
+                    <button onclick="testEndpoint('/api/docs', 'GET', null, 'response-docs')">Enviar</button>
+                    <button class="btn-back" onclick="toggleTest('test-docs')">↑ Volver arriba</button>
+                    <div id="response-docs" class="response-box"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script type="text/javascript">
+    // Scroll suave a la sección
+    function scrollToSection(id) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    // Toggle del formulario de prueba
+    function toggleTest(id) {
+        const element = document.getElementById(id);
+        if (element) {
+            if (element.style.display === 'none' || element.style.display === '') {
+                element.style.display = 'block';
+            } else {
+                element.style.display = 'none';
+            }
+        }
+    }
+
+    // Probar endpoint
+    function testEndpoint(endpoint, method, bodyId, responseId) {
+        const responseBox = document.getElementById(responseId);
+        if (!responseBox) return;
+        
+        responseBox.style.display = 'block';
+        responseBox.textContent = 'Enviando petición...';
+
+        let body = null;
+        if (bodyId) {
+            const bodyElement = document.getElementById(bodyId);
+            if (bodyElement) {
+                const bodyText = bodyElement.value;
+                try {
+                    body = JSON.parse(bodyText);
+                } catch (e) {
+                    responseBox.textContent = 'Error: JSON inválido\n' + e.message;
+                    return;
+                }
+            }
+        }
+
+        const options = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        };
+
+        if (body && method !== 'GET') {
+            options.body = JSON.stringify(body);
+        }
+
+        const requestInfo = {
+            method: method,
+            url: 'http://localhost/RedSocial/public' + endpoint,
+            headers: options.headers,
+            body: body
+        };
+
+        fetch('http://localhost/RedSocial/public' + endpoint, options)
+            .then(response => {
+                const status = response.status;
+                const statusText = response.statusText;
+                return response.json().then(data => ({ status, statusText, data })).catch(() => ({
+                    status,
+                    statusText,
+                    data: { error: 'Respuesta no es JSON válido' }
+                }));
+            })
+            .then(result => {
+                const requestData = {
+                    method: requestInfo.method,
+                    url: requestInfo.url,
+                    headers: requestInfo.headers
+                };
+                
+                responseBox.textContent = JSON.stringify({
+                    http: {
+                        status: result.status,
+                        statusText: result.statusText,
+                        contentType: 'application/json'
+                    },
+                    request: requestData,
+                    response: result.data
+                }, null, 2);
+            })
+            .catch(error => {
+                responseBox.textContent = 'Error de conexión: ' + error.message;
+            });
+    }
+
+    // Probar endpoint con parámetro
+    function testEndpointWithParam(baseEndpoint, method, paramId, bodyId, responseId) {
+        const paramElement = document.getElementById(paramId);
+        if (!paramElement) return;
+        
+        const param = paramElement.value;
+        if (!param) {
+            alert('Por favor ingresa el token en el campo');
+            return;
+        }
+        testEndpoint(baseEndpoint + param, method, bodyId, responseId);
+    }
+
+    // Verificar que el DOM esté cargado
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Documentación API cargada correctamente');
+    });
+</script>
+
+{% endblock %}
+
+
+
