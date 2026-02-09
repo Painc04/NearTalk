@@ -632,9 +632,13 @@
   "data": {
     "nombre": "usuario",
     "email": "nuevo@example.com",
-    "access_token": "token_hex"
+    "access_token": "token_hex",
+    "chat_general_token": "CHAT_PUBLICO_GENERAL_TOKEN_FIJO_12345"
   }
 }</pre>
+                    <div style="background: #e7f3ff; padding: 8px; margin-top: 8px; border-radius: 3px;">
+                        <strong>ℹ️ Nota:</strong> El campo <code>chat_general_token</code> permite al usuario unirse automáticamente al chat general público.
+                    </div>
                 </div>
                 
                 <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
@@ -703,9 +707,13 @@
     "usuario_id": 1,
     "username": "miusuario",
     "email": "usuario@example.com",
-    "token": "token_de_64_caracteres_hex"
+    "token": "token_de_64_caracteres_hex",
+    "chat_general_token": "CHAT_PUBLICO_GENERAL_TOKEN_FIJO_12345"
   }
 }</pre>
+                    <div style="background: #e7f3ff; padding: 8px; margin-top: 8px; border-radius: 3px;">
+                        <strong>ℹ️ Nota:</strong> El campo <code>chat_general_token</code> permite al usuario unirse automáticamente al chat general público.
+                    </div>
                 </div>
                 
                 <div style="background: #f8d7da; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
@@ -1557,14 +1565,16 @@ AUTH_010 - Usuario no encontrado</pre>
                 <div style="background: #e7f3ff; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
                     <strong>Datos que se reciben:</strong><br>
                     <pre style="margin: 5px 0;">• api_key (tipo: string, requerido)
-• user_token (tipo: string, requerido - token del usuario)</pre>
+• user_token (tipo: string, requerido - token del usuario)
+• chat_token (tipo: string, requerido - token del chat público)</pre>
                 </div>
                 
                 <div style="background: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; font-size: 0.9em;">
                     <strong>Body:</strong><br>
                     <pre style="margin: 5px 0;">{
   "api_key": "ABCDEFGHIJK1234567890",
-  "user_token": "tu_token_aqui"
+  "user_token": "tu_token_aqui",
+  "chat_token": "CHAT_PUBLICO_GENERAL_TOKEN_FIJO_12345"
 }</pre>
                 </div>
                 
@@ -1600,18 +1610,20 @@ AUTH_010 - Usuario no encontrado</pre>
                     <strong>Posibles errores:</strong><br>
                     <pre style="margin: 5px 0;">• AUTH_001 (400): api_key requerido
 • AUTH_003 (400): user_token requerido
+• CHAT_002 (400): chat_token requerido
+• CHAT_003 (400): Token de chat inválido
 • AUTH_006 (401): API key inválida
 • AUTH_002 (401): Token inválido o expirado
 • AUTH_007 (500): Configuración de servidor inválida
 • USER_001 (404): Usuario no encontrado
-• CHAT_004 (404): Chat público aún no ha sido creado</pre>
+• CHAT_005 (500): Error al obtener usuarios</pre>
                 </div>
                 
                 <button class="btn-test" onclick="toggleTest('test-general-usuarios')">▶ Probar endPoint</button>
                 
                 <div id="test-general-usuarios" class="test-form" style="display:none;">
                     <h4>Datos que se envían:</h4>
-                    <textarea id="body-general-usuarios">{"api_key": "ABCDEFGHIJK1234567890", "user_token": "tu_token_aqui"}</textarea>
+                    <textarea id="body-general-usuarios">{"api_key": "ABCDEFGHIJK1234567890", "user_token": "tu_token_aqui", "chat_token": "CHAT_PUBLICO_GENERAL_TOKEN_FIJO_12345"}</textarea>
                     <button onclick="testEndpoint('/api/general/usuarios', 'POST', 'body-general-usuarios', 'response-general-usuarios')">Enviar</button>
                     <button class="btn-back" onclick="toggleTest('test-general-usuarios')">↑ Volver arriba</button>
                     <div id="response-general-usuarios" class="response-box"></div>

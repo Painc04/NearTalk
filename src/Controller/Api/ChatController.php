@@ -1270,7 +1270,18 @@ class ChatController extends AbstractController
                 return ApiResponseService::error('user_token requerido', 'AUTH_003', null, 400);
             }
 
+            // Validar chat_token
+            if (!isset($data['chat_token'])) {
+                return ApiResponseService::error('chat_token requerido', 'CHAT_002', null, 400);
+            }
+
             $userToken = $data['user_token'];
+            $chatToken = $data['chat_token'];
+
+            // Validar que el chat_token sea el del chat público
+            if ($chatToken !== self::CHAT_GENERAL_TOKEN) {
+                return ApiResponseService::error('Token de chat inválido', 'CHAT_003', null, 400);
+            }
 
             // Obtener usuario por token
             $userId = $this->getUserIdByToken($userToken);

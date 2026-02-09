@@ -68,7 +68,8 @@ class AuthController extends AbstractController
                 'usuario_id' => $user->getId(),
                 'username' => $user->getUsername(),
                 'email' => $user->getEmail(),
-                'token' => $token
+                'token' => $token,
+                'chat_general_token' => 'CHAT_PUBLICO_GENERAL_TOKEN_FIJO_12345'
             ]
         ], 200);
     }
@@ -121,6 +122,7 @@ class AuthController extends AbstractController
             'nombre' => $user->getUsername(),
             'email' => $user->getEmail(),
             'access_token' => $token,
+            'chat_general_token' => 'CHAT_PUBLICO_GENERAL_TOKEN_FIJO_12345',
         ], 'Usuario registrado exitosamente', 201);
     }
 
